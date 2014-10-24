@@ -1,6 +1,7 @@
 package edu.upc.eetac.dsa.smachado.beeter.api.model;
 
-public class Sting {
+public class Sting 
+{
 	private int stingid;
 	private String username;
 	private String content;
@@ -17,27 +18,33 @@ public class Sting {
 		this.stingid = stingid;
 	}
 
-	public String getUsername() {
+	public String getUsername() 
+	{
 		return username;
 	}
 
-	public void setUsername(String username) {
+	public void setUsername(String username) 
+	{
 		this.username = username;
 	}
 
-	public String getContent() {
+	public String getContent() 
+	{
 		return content;
 	}
 
-	public void setContent(String content) {
+	public void setContent(String content) 
+	{
 		this.content = content;
 	}
 
-	public String getSubject() {
+	public String getSubject() 
+	{
 		return subject;
 	}
 
-	public void setSubject(String subject) {
+	public void setSubject(String subject) 
+	{
 		this.subject = subject;
 	}
 

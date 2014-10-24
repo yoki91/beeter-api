@@ -13,7 +13,7 @@
 		</init-param>
 		<init-param>
 			<param-name>javax.ws.rs.Application</param-name>
-			<param-value>edu.upc.eetac.dsa.smachado.beeter.api.BeeterApplication</param-value>
+			<param-value>edu.upc.eetac.dsa.smachado.beeter.api.	</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>

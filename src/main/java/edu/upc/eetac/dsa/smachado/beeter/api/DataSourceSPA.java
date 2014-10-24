@@ -22,7 +22,8 @@ public class DataSourceSPA //Definimos un Singleton
 		}
 	}
 
-	public final static DataSourceSPA getInstance() {
+	public final static DataSourceSPA getInstance() 
+	{
 		if (instance == null)
 			instance = new DataSourceSPA();
 		return instance;

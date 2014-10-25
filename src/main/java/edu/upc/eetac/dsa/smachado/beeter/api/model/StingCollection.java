@@ -27,6 +27,18 @@ public class StingCollection
 		stings = new ArrayList<Sting>();
 	}
 
+	/*public List<Sting> getBuscarStings() 
+	{
+		return stings;
+	}
+
+	public void setBuscarStings(List<Sting> Stings) 
+	{
+		this.stings = Stings;
+	}*/
+	
+	
+	
 	public List<Sting> getStings() 
 	{
 		return stings;
@@ -36,6 +48,9 @@ public class StingCollection
 	{
 		this.stings = Stings;
 	}
+	
+	
+	
 
 	public void addSting(Sting Stings) 
 	{
@@ -46,7 +61,8 @@ public class StingCollection
 		return NewestTimestamp;
 	}
 
-	public void setNewestTimestamp(long newestTimestamp) {
+	public void setNewestTimestamp(long newestTimestamp) 
+	{
 		NewestTimestamp = newestTimestamp;
 	}
 }

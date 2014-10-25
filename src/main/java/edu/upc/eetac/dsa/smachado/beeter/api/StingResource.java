@@ -16,8 +16,8 @@ public class StingResource
 	private String GET_STINGS_QUERY_FROM_LAST = "select s.*, u.name from stings s, users u where u.username=s.username and s.creation_timestamp > ? order by creation_timestamp desc";
 	@GET
 	@Produces(MediaType.BEETER_API_STING_COLLECTION)
-	public StingCollection getStings(@QueryParam("length") int length,
-			@QueryParam("before") long before, @QueryParam("after") long after) {
+	public StingCollection getStings(@QueryParam("length") int length,@QueryParam("before") long before, @QueryParam("after") long after) 
+	{
 		StingCollection stings = new StingCollection();
 
 		Connection conn = null;
@@ -48,7 +48,8 @@ public class StingResource
 			ResultSet rs = stmt.executeQuery();
 			boolean first = true;
 			long oldestTimestamp = 0;
-			while (rs.next()) {
+			while (rs.next()) 
+			{
 				Sting sting = new Sting();
 				sting.setStingid(rs.getInt("stingid"));
 				sting.setUsername(rs.getString("username"));
@@ -56,26 +57,131 @@ public class StingResource
 				sting.setSubject(rs.getString("subject"));
 				oldestTimestamp = rs.getTimestamp("last_modified").getTime();
 				sting.setLastModified(oldestTimestamp);
-				if (first) {
+				if (first) 
+				{
 					first = false;
 					stings.setNewestTimestamp(sting.getLastModified());
 				}
 				stings.addSting(sting);
 			}
 			stings.setOldestTimestamp(oldestTimestamp);
-		} catch (SQLException e) {
+		} catch (SQLException e) 
+		{
 			throw new ServerErrorException(e.getMessage(),Response.Status.INTERNAL_SERVER_ERROR);
-		} finally {
-			try {
+		} 
+		finally 
+		{
+			try 
+			{
 				if (stmt != null)
 					stmt.close();
 				conn.close();
-			} catch (SQLException e) {
+			} 
+			catch (SQLException e) 
+			{
+				
 			}
 		}
 
 		return stings;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	private String BUSCAR_STING_POR_SUBJETOYCONTENIDO_QUERY="select s.* from stings s where s.content=? and s.subject=?";
+	
+	
+	
+	
+	@GET
+	@Path("/search")
+	@Produces(MediaType.BEETER_API_STING_COLLECTION)
+	private StingCollection BuscarStings(@QueryParam("{subject}") String subject,@QueryParam("{content}") String content)
+	{
+		
+
+		StingCollection stings = new StingCollection();
+		Sting sting = new Sting();
+		Connection conn = null;
+		try
+		{
+			conn = ds.getConnection();
+		} catch (SQLException e) 
+		{
+			throw new ServerErrorException("Could not connect to the database",Response.Status.SERVICE_UNAVAILABLE);
+		}
+
+		PreparedStatement stmt = null;
+		try 
+		{
+			stmt=conn.prepareStatement(BUSCAR_STING_POR_SUBJETOYCONTENIDO_QUERY);
+			stmt.setString(1,subject);
+			stmt.setString(2, content);
+			ResultSet rs = stmt.executeQuery();
+			System.out.println("antes if");
+			if (rs.next()) 
+			{
+				System.out.println("dentro if");
+				Sting sting1=new Sting();
+				sting1.setStingid(rs.getInt("stingid"));
+				sting1.setUsername(rs.getString("username"));
+				sting1.setAuthor(rs.getString("name"));
+				sting1.setSubject(rs.getString("subject"));
+				sting1.setContent(rs.getString("content"));
+				sting1.setLastModified(rs.getTimestamp("last_modified").getTime());
+				sting1.setCreationTimestamp(rs.getTimestamp("creation_timestamp").getTime());
+				stings.addSting(sting);
+			} 
+			else 
+			{
+				throw new NotFoundException("There's no sting with subject"+sting.getSubject()+ "and content"+sting.getContent());
+			}
+		}
+		catch (SQLException e) 
+		{
+			throw new ServerErrorException(e.getMessage(),Response.Status.INTERNAL_SERVER_ERROR);
+		} 
+		finally 
+		{
+			try 
+			{
+				if (stmt != null)
+					stmt.close();
+				conn.close();
+			} 
+			catch (SQLException e) 
+			{
+				
+			}
+		}
+		
+		return stings;
+		
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	private String GET_STING_BY_ID_QUERY = "select s.*, u.name from stings s, users u where u.username=s.username and s.stingid=?";
 
@@ -87,7 +193,8 @@ public class StingResource
 		try
 		{
 			conn = ds.getConnection();
-		} catch (SQLException e) 
+		} 
+		catch (SQLException e) 
 		{
 			throw new ServerErrorException("Could not connect to the database",Response.Status.SERVICE_UNAVAILABLE);
 		}
@@ -131,6 +238,8 @@ public class StingResource
 
 		return sting;
 	}
+	
+	
 	@GET
 	@Path("/{stingid}")
 	@Produces(MediaType.BEETER_API_STING)
@@ -219,7 +328,8 @@ public class StingResource
 		return sting;
 	}
 
-	private void validateSting(Sting sting) {
+	private void validateSting(Sting sting) 
+	{
 		if (sting.getSubject() == null)
 			throw new BadRequestException("Subject can't be null.");
 		if (sting.getContent() == null)
@@ -232,11 +342,15 @@ public class StingResource
 					"Content can't be greater than 500 characters.");
 	}
 
+	
+	
+	
 	private String DELETE_STING_QUERY = "delete from stings where stingid=?";
 
 	@DELETE
 	@Path("/{stingid}")
-	public void deleteSting(@PathParam("stingid") String stingid) {
+	public void deleteSting(@PathParam("stingid") String stingid) 
+	{
 		validateUser(stingid);
 		Connection conn = null;
 		try {
@@ -287,7 +401,8 @@ public class StingResource
 	@Path("/{stingid}")
 	@Consumes(MediaType.BEETER_API_STING)
 	@Produces(MediaType.BEETER_API_STING)
-	public Sting updateSting(@PathParam("stingid") String stingid, Sting sting) {
+	public Sting updateSting(@PathParam("stingid") String stingid, Sting sting) 
+	{
 		validateUser(stingid);
 		validateUpdateSting(sting);
 		Connection conn = null;

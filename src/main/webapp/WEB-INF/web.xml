@@ -13,7 +13,7 @@
 		</init-param>
 		<init-param>
 			<param-name>javax.ws.rs.Application</param-name>
-			<param-value>edu.upc.eetac.dsa.smachado.beeter.api.	</param-value>
+			<param-value>edu.upc.eetac.dsa.smachado.beeter.api.BeeterApplication</param-value>
 		</init-param>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
@@ -104,6 +104,7 @@
 			<url-pattern>/stings/*</url-pattern>
 			<http-method>POST</http-method>
 			<http-method>PUT</http-method>
+			
 			<http-method>DELETE</http-method>
 		</web-resource-collection>
 		<auth-constraint>

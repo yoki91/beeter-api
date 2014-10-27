@@ -133,7 +133,7 @@ public class StingResource
 			System.out.println("antes if");	
 			if(rs.next()) //if existe el resurso en Mysql ejecuta el bucle
 			{
-				//while(rs.next())  
+				//while(rs.next())   
 				System.out.println("dentro if");
 				Sting sting1=new Sting();
 				sting1.setStingid(rs.getInt("stingid"));

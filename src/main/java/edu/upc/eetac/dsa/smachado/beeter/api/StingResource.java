@@ -32,12 +32,12 @@ public class StingResource
 		PreparedStatement stmt = null;
 		try {
 			boolean updateFromLast = after > 0;
-			stmt = updateFromLast ? conn
-					.prepareStatement(GET_STINGS_QUERY_FROM_LAST) : conn
-					.prepareStatement(GET_STINGS_QUERY);
-			if (updateFromLast) {
+			stmt = updateFromLast ? conn.prepareStatement(GET_STINGS_QUERY_FROM_LAST) : conn.prepareStatement(GET_STINGS_QUERY);
+			if (updateFromLast) 
+			{
 				stmt.setTimestamp(1, new Timestamp(after));
-			} else {
+			} else 
+			{
 				if (before > 0)
 					stmt.setTimestamp(1, new Timestamp(before));
 				else
@@ -95,9 +95,9 @@ public class StingResource
 	
 	
 	
+	private String BUSCAR_STING_POR_SUBJETOYCONTENIDO_QUERY="select s.* from stings s where s.subject=? and s.content=?";
 	
 	
-	private String BUSCAR_STING_POR_SUBJETOYCONTENIDO_QUERY="select s.* from stings s where s.content=? and s.subject=?";
 	
 	
 	
@@ -105,8 +105,10 @@ public class StingResource
 	@GET
 	@Path("/search")
 	@Produces(MediaType.BEETER_API_STING_COLLECTION)
-	private StingCollection BuscarStings(@QueryParam("{subject}") String subject,@QueryParam("{content}") String content)
+	
+	public StingCollection BuscarStings(@QueryParam("subject") String subject,@QueryParam("content") String content)
 	{
+		
 		
 
 		StingCollection stings = new StingCollection();
@@ -126,22 +128,24 @@ public class StingResource
 			stmt=conn.prepareStatement(BUSCAR_STING_POR_SUBJETOYCONTENIDO_QUERY);
 			stmt.setString(1,subject);
 			stmt.setString(2, content);
+			System.out.print(stmt);
 			ResultSet rs = stmt.executeQuery();
-			System.out.println("antes if");
-			if (rs.next()) 
+			System.out.println("antes if");	
+			if(rs.next()) //if existe el resurso en Mysql ejecuta el bucle
 			{
+				//while(rs.next())  
 				System.out.println("dentro if");
 				Sting sting1=new Sting();
 				sting1.setStingid(rs.getInt("stingid"));
 				sting1.setUsername(rs.getString("username"));
-				sting1.setAuthor(rs.getString("name"));
 				sting1.setSubject(rs.getString("subject"));
 				sting1.setContent(rs.getString("content"));
 				sting1.setLastModified(rs.getTimestamp("last_modified").getTime());
 				sting1.setCreationTimestamp(rs.getTimestamp("creation_timestamp").getTime());
-				stings.addSting(sting);
-			} 
-			else 
+				stings.addSting(sting1);
+			}		
+
+			else
 			{
 				throw new NotFoundException("There's no sting with subject"+sting.getSubject()+ "and content"+sting.getContent());
 			}
@@ -204,7 +208,8 @@ public class StingResource
 			stmt = conn.prepareStatement(GET_STING_BY_ID_QUERY);
 			stmt.setInt(1, Integer.valueOf(stingid));
 			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
+			if (rs.next())
+			{
 				sting.setStingid(rs.getInt("stingid"));
 				sting.setUsername(rs.getString("username"));
 				sting.setAuthor(rs.getString("name"));
@@ -355,7 +360,8 @@ public class StingResource
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
-		} catch (SQLException e) {
+		} catch (SQLException e) 
+		{
 			throw new ServerErrorException("Could not connect to the database",
 					Response.Status.SERVICE_UNAVAILABLE);
 		}
@@ -366,9 +372,9 @@ public class StingResource
 			stmt.setInt(1, Integer.valueOf(stingid));
 
 			int rows = stmt.executeUpdate();
-			if (rows == 0) {
-				throw new NotFoundException("There's no sting with stingid="
-						+ stingid);
+			if (rows == 0) 
+			{
+				throw new NotFoundException("There's no sting with stingid="+ stingid);
 			}
 		} catch (SQLException e) {
 			throw new ServerErrorException(e.getMessage(),

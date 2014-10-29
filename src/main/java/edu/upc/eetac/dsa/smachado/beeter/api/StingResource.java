@@ -106,7 +106,7 @@ public class StingResource
 	@Path("/search")
 	@Produces(MediaType.BEETER_API_STING_COLLECTION)
 	
-	public StingCollection BuscarStings(@QueryParam("subject") String subject,@QueryParam("content") String content)
+	public StingCollection BuscarStings(@QueryParam("subject") String subject,@QueryParam("content") String content,@QueryParam("length") int length)
 	{
 		
 		
@@ -130,25 +130,33 @@ public class StingResource
 			stmt.setString(2, content);
 			System.out.print(stmt);
 			ResultSet rs = stmt.executeQuery();
-			System.out.println("antes if");	
-			if(rs.next()) //if existe el resurso en Mysql ejecuta el bucle
+			System.out.println("antes while");	
+            int i=0;
+						
+			if(rs.getFetchSize()==0)
 			{
-				//while(rs.next())   
-				System.out.println("dentro if");
-				Sting sting1=new Sting();
-				sting1.setStingid(rs.getInt("stingid"));
-				sting1.setUsername(rs.getString("username"));
-				sting1.setSubject(rs.getString("subject"));
-				sting1.setContent(rs.getString("content"));
-				sting1.setLastModified(rs.getTimestamp("last_modified").getTime());
-				sting1.setCreationTimestamp(rs.getTimestamp("creation_timestamp").getTime());
-				stings.addSting(sting1);
-			}		
-
+				while(rs.next() && i<length) //if existe el resurso en Mysql ejecuta el bucle
+				{  
+					System.out.println("dentro while");
+					Sting sting1=new Sting();
+					sting1.setStingid(rs.getInt("stingid"));
+					sting1.setUsername(rs.getString("username"));
+					sting1.setSubject(rs.getString("subject"));
+					sting1.setContent(rs.getString("content"));
+					sting1.setLastModified(rs.getTimestamp("last_modified").getTime());
+					sting1.setCreationTimestamp(rs.getTimestamp("creation_timestamp").getTime());
+					stings.addSting(sting1);
+					i=i+1;
+				}
+				
+			}
+		
 			else
 			{
-				throw new NotFoundException("There's no sting with subject"+sting.getSubject()+ "and content"+sting.getContent());
+				throw new NotFoundException("There's no sting with subject"+subject+ "and content" +content);
 			}
+
+			
 		}
 		catch (SQLException e) 
 		{
@@ -263,7 +271,8 @@ public class StingResource
 
 		// If ETag matches the rb will be non-null;
 		// Use the rb to return the response without any further processing
-		if (rb != null) {
+		if (rb != null) 
+		{
 			return rb.cacheControl(cc).tag(eTag).build();
 		}
 

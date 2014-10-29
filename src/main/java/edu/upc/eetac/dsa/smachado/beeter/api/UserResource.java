@@ -12,44 +12,139 @@ import org.apache.commons.codec.digest.DigestUtils;
 import edu.upc.eetac.dsa.smachado.beeter.api.model.User;
 
 @Path("/users")
-public class UserResource {
-	private DataSource ds = DataSourceSPA.getInstance().getDataSource();
+public class UserResource 
+{	
+  private DataSource ds = DataSourceSPA.getInstance().getDataSource();
 
-	private final static String GET_USER_BY_USERNAME_QUERY = "select * from users where username=?";
-	private final static String INSERT_USER_INTO_USERS = "insert into users values(?, MD5(?), ?, ?)";
-	private final static String INSERT_USER_INTO_USER_ROLES = "insert into user_roles values (?, 'registered')";
+  private final static String GET_USER_BY_USERNAME_QUERY = "select * from users where username=?";
+  private final static String INSERT_USER_INTO_USERS = "insert into users values(?, MD5(?), ?, ?)";
+  private final static String INSERT_USER_INTO_USER_ROLES = "insert into user_roles values (?, 'registered')";
+  
+  
+  
+  
+  
+  @Path("/{username}")
+  @GET
+  @Produces((MediaType.BEETER_API_USER))
+  public User ObtenerUsuarioCache(@PathParam("username") String username,@Context Request request)
+  {
+	  CacheControl cc=new CacheControl();
+	  
+	  User Usuario=ObtenerUsuarioDesdeDB(username);
+	  
+	  EtityTag eTag =new EntityTag(long.toString());
+	  
+	  Response.ResponseBuilder rb =request.evaluatePreconditions(eTag);
+	  
+	  if(rb !=null)
+	  {
+		  return rb.cacheControl(cc).tag(etag).build();
+	  }
+	  else
+	   rb=Response.ok(User).cacheControl(cc).tag(eTag);
+	  return rb.build();
+	  
+	  
+  }
+  
+  private User ObtenerUsuarioDesdeDB(String username)
+  {
+	  User usuario=new User();
+	  Connection conn = null;
+		try {
+			conn = ds.getConnection();
+		} 
+		catch (SQLException e) 
+		{
+			throw new ServerErrorException("Could not connect to the database",
+					Response.Status.SERVICE_UNAVAILABLE);
+		}
+		
+		
+		PreparedStatement stmt = null;
+		try 
+		{
+			stmt = conn.prepareStatement(GET_USER_BY_USERNAME_QUERY);
+			stmt.setString(1, username);
 
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) 
+			{
+				usuario.setUsername(rs.getString("username"));
+				usuario.setPassword(rs.getString("userpass"));
+				usuario.setEmail(rs.getString("email"));
+				usuario.setName(rs.getString("name"));
+			} else
+				throw new NotFoundException(username + " not found.");
+		} 
+		catch (SQLException e) 
+		{
+			throw new ServerErrorException(e.getMessage(),
+					Response.Status.INTERNAL_SERVER_ERROR);
+		} 
+		finally 
+		{
+			try 
+			{
+				if (stmt != null)
+					stmt.close();
+				conn.close();
+			} catch (SQLException e) 
+			{
+				
+			}
+		}
+	  
+	  
+	  return usuario;
+  }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+    
 	@POST
 	@Consumes(MediaType.BEETER_API_USER)
 	@Produces(MediaType.BEETER_API_USER)
-	public User createUser(User user) {
+	public User createUser(User user) 
+	{
 		validateUser(user);
 
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) 
+		{
 			throw new ServerErrorException("Could not connect to the database",
 					Response.Status.SERVICE_UNAVAILABLE);
 		}
 		PreparedStatement stmtGetUsername = null;
 		PreparedStatement stmtInsertUserIntoUsers = null;
 		PreparedStatement stmtInsertUserIntoUserRoles = null;
-		try {
+		try 
+		{
 			stmtGetUsername = conn.prepareStatement(GET_USER_BY_USERNAME_QUERY);
 			stmtGetUsername.setString(1, user.getUsername());
 
 			ResultSet rs = stmtGetUsername.executeQuery();
 			if (rs.next())
-				throw new WebApplicationException(user.getUsername()
-						+ " already exists.", Status.CONFLICT);
+				throw new WebApplicationException(user.getUsername()+ " already exists.", Status.CONFLICT);
 			rs.close();
 
 			conn.setAutoCommit(false);
-			stmtInsertUserIntoUsers = conn
-					.prepareStatement(INSERT_USER_INTO_USERS);
-			stmtInsertUserIntoUserRoles = conn
-					.prepareStatement(INSERT_USER_INTO_USER_ROLES);
+			stmtInsertUserIntoUsers = conn.prepareStatement(INSERT_USER_INTO_USERS);
+			stmtInsertUserIntoUserRoles = conn.prepareStatement(INSERT_USER_INTO_USER_ROLES);
 
 			stmtInsertUserIntoUsers.setString(1, user.getUsername());
 			stmtInsertUserIntoUsers.setString(2, user.getPassword());
@@ -61,15 +156,22 @@ public class UserResource {
 			stmtInsertUserIntoUserRoles.executeUpdate();
 
 			conn.commit();
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) 
+		{
 			if (conn != null)
-				try {
+				try 
+			{
 					conn.rollback();
-				} catch (SQLException e1) {
+				} 
+			catch (SQLException e1) 
+			{
 				}
 			throw new ServerErrorException(e.getMessage(),
 					Response.Status.INTERNAL_SERVER_ERROR);
-		} finally {
+		} 
+		finally 
+		{
 			try {
 				if (stmtGetUsername != null)
 					stmtGetUsername.close();
@@ -79,14 +181,18 @@ public class UserResource {
 					stmtGetUsername.close();
 				conn.setAutoCommit(true);
 				conn.close();
-			} catch (SQLException e) {
+			} 
+			catch (SQLException e) 
+			{
+				
 			}
 		}
 		user.setPassword(null);
 		return user;
 	}
 
-	private void validateUser(User user) {
+	private void validateUser(User user) 
+	{
 		if (user.getUsername() == null)
 			throw new BadRequestException("username cannot be null.");
 		if (user.getPassword() == null)
@@ -101,7 +207,8 @@ public class UserResource {
 	@POST
 	@Produces(MediaType.BEETER_API_USER)
 	@Consumes(MediaType.BEETER_API_USER)
-	public User login(User user) {
+	public User login(User user) 
+	{
 		if (user.getUsername() == null || user.getPassword() == null)
 			throw new BadRequestException(
 					"username and password cannot be null.");
@@ -115,39 +222,52 @@ public class UserResource {
 		return user;
 	}
 
-	private User getUserFromDatabase(String username, boolean password) {
+	private User getUserFromDatabase(String username, boolean password) 
+	{
 		User user = new User();
 		Connection conn = null;
-		try {
+		try 
+		{
 			conn = ds.getConnection();
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) 
+		{
 			throw new ServerErrorException("Could not connect to the database",
 					Response.Status.SERVICE_UNAVAILABLE);
 		}
 
 		PreparedStatement stmt = null;
-		try {
+		try 
+		{
 			stmt = conn.prepareStatement(GET_USER_BY_USERNAME_QUERY);
 			stmt.setString(1, username);
 
 			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
+			if (rs.next()) 
+			{
 				user.setUsername(rs.getString("username"));
 				if (password)
-					user.setPassword(rs.getString("userpass"));
+				user.setPassword(rs.getString("userpass"));
 				user.setEmail(rs.getString("email"));
 				user.setName(rs.getString("name"));
 			} else
 				throw new NotFoundException(username + " not found.");
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) 
+		{
 			throw new ServerErrorException(e.getMessage(),
 					Response.Status.INTERNAL_SERVER_ERROR);
-		} finally {
-			try {
+		} 
+		finally 
+		{
+			try 
+			{
 				if (stmt != null)
 					stmt.close();
 				conn.close();
-			} catch (SQLException e) {
+			} catch (SQLException e) 
+			{
+				
 			}
 		}
 

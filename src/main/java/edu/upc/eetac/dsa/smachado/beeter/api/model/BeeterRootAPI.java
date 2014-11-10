@@ -9,7 +9,7 @@ import edu.upc.eetac.dsa.smachado.beeter.api.MediaType;
 import edu.upc.eetac.dsa.smachado.beeter.api.StingResource;
 public class BeeterRootAPI 
 {
-	@InjectLinks({
+@InjectLinks({
 @InjectLink(resource = BeeterRootAPIResource.class, style = Style.ABSOLUTE, rel = "self bookmark home", title = "Beeter Root API", method = "getRootAPI"),
 @InjectLink(resource = StingResource.class, style = Style.ABSOLUTE, rel = "stings", title = "Latest stings", type = MediaType.BEETER_API_STING_COLLECTION),
 @InjectLink(resource = StingResource.class, style = Style.ABSOLUTE, rel = "create-stings", title = "Latest stings", type = MediaType.BEETER_API_STING) })

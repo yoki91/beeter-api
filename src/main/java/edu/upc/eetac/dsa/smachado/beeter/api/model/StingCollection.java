@@ -1,68 +1,66 @@
 package edu.upc.eetac.dsa.smachado.beeter.api.model;
 
-import edu.upc.eetac.dsa.smachado.beeter.api.model.Sting;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class StingCollection 
-{
-	private long NewestTimestamp;
-	private long oldestTimestamp;
+import javax.ws.rs.core.Link;
 
-	public long getOldestTimestamp() 
-	{
-		return oldestTimestamp;
-	}
+import org.glassfish.jersey.linking.Binding;
+import org.glassfish.jersey.linking.InjectLink;
+import org.glassfish.jersey.linking.InjectLink.Style;
+import org.glassfish.jersey.linking.InjectLinks;
 
-	public void setOldestTimestamp(long oldestTimestamp) 
-	{
-		this.oldestTimestamp = oldestTimestamp;
-	}
+import edu.upc.eetac.dsa.smachado.beeter.api.MediaType;
+import edu.upc.eetac.dsa.smachado.beeter.api.StingResource;
 
+public class StingCollection {
+	@InjectLinks({
+			@InjectLink(resource = StingResource.class, style = Style.ABSOLUTE, rel = "create-sting", title = "Create sting", type = MediaType.BEETER_API_STING),
+			@InjectLink(value = "/stings?before={before}", style = Style.ABSOLUTE, rel = "previous", title = "Previous stings", type = MediaType.BEETER_API_STING_COLLECTION, bindings = { @Binding(name = "before", value = "${instance.oldestTimestamp}") }),
+			@InjectLink(value = "/stings?after={after}", style = Style.ABSOLUTE, rel = "current", title = "Newest stings", type = MediaType.BEETER_API_STING_COLLECTION, bindings = { @Binding(name = "after", value = "${instance.newestTimestamp}") }) })
+	private List<Link> links;
 	private List<Sting> stings;
+	private long newestTimestamp;
+	private long oldestTimestamp;
 
 	public StingCollection() {
 		super();
-		stings = new ArrayList<Sting>();
+		stings = new ArrayList<>();
 	}
 
-	/*public List<Sting> getBuscarStings() 
-	{
+	public List<Sting> getStings() {
 		return stings;
 	}
 
-	public void setBuscarStings(List<Sting> Stings) 
-	{
-		this.stings = Stings;
-	}*/
-	
-	
-	
-	public List<Sting> getStings() 
-	{
-		return stings;
+	public void setStings(List<Sting> stings) {
+		this.stings = stings;
 	}
 
-	public void setStings(List<Sting> Stings) 
-	{
-		this.stings = Stings;
+	public void addSting(Sting sting) {
+		stings.add(sting);
 	}
-	
-	
-	
 
-	public void addSting(Sting Stings) 
-	{
-		stings.add(Stings);
+	public List<Link> getLinks() {
+		return links;
+	}
+
+	public void setLinks(List<Link> links) {
+		this.links = links;
 	}
 
 	public long getNewestTimestamp() {
-		return NewestTimestamp;
+		return newestTimestamp;
 	}
 
-	public void setNewestTimestamp(long newestTimestamp) 
-	{
-		NewestTimestamp = newestTimestamp;
+	public void setNewestTimestamp(long newestTimestamp) {
+		this.newestTimestamp = newestTimestamp;
+	}
+
+	public long getOldestTimestamp() {
+		return oldestTimestamp;
+	}
+
+	public void setOldestTimestamp(long oldestTimestamp) {
+		this.oldestTimestamp = oldestTimestamp;
 	}
 }

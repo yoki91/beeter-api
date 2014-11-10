@@ -27,22 +27,24 @@ public class UserResource
   @Path("/{username}")
   @GET
   @Produces((MediaType.BEETER_API_USER))
-  public User ObtenerUsuarioCache(@PathParam("username") String username,@Context Request request)
+  public Response ObtenerUsuarioCache(@PathParam("username") String username,@Context Request request)
   {
+	  User Usuario=new User();
+	  Usuario=ObtenerUsuarioDesdeDB(username);
+	  String referencia = DigestUtils.md5Hex(Usuario.getName()+Usuario.getEmail());
 	  CacheControl cc=new CacheControl();
 	  
-	  User Usuario=ObtenerUsuarioDesdeDB(username);
 	  
-	  EtityTag eTag =new EntityTag(long.toString());
+	  EntityTag eTag =new EntityTag(referencia);
 	  
 	  Response.ResponseBuilder rb =request.evaluatePreconditions(eTag);
 	  
 	  if(rb !=null)
 	  {
-		  return rb.cacheControl(cc).tag(etag).build();
+		  return rb.cacheControl(cc).tag(eTag).build();
 	  }
 	  else
-	   rb=Response.ok(User).cacheControl(cc).tag(eTag);
+	   rb=Response.ok(Usuario).cacheControl(cc).tag(eTag);
 	  return rb.build();
 	  
 	  
@@ -72,7 +74,7 @@ public class UserResource
 			if (rs.next()) 
 			{
 				usuario.setUsername(rs.getString("username"));
-				usuario.setPassword(rs.getString("userpass"));
+				//usuario.setPassword(rs.getString("userpass"));
 				usuario.setEmail(rs.getString("email"));
 				usuario.setName(rs.getString("name"));
 			} else

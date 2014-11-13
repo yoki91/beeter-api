@@ -1,5 +1,4 @@
 package edu.upc.eetac.dsa.smachado.beeter.api;
-
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;

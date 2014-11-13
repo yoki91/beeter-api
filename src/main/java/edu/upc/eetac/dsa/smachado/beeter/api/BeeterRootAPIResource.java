@@ -7,7 +7,8 @@ import edu.upc.eetac.dsa.smachado.beeter.api.model.BeeterRootAPI;
 @Path("/")
 public class BeeterRootAPIResource {
 	@GET
-	public BeeterRootAPI getRootAPI() {
+	public BeeterRootAPI getRootAPI() 
+	{
 		BeeterRootAPI api = new BeeterRootAPI();
 		return api;
 	}

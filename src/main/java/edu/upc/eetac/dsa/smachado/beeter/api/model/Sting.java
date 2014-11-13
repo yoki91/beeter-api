@@ -19,7 +19,6 @@ public class Sting {
 	private List<Link> links;
 	private int stingid;
 	private String username;
-	private String author;
 	private String subject;
 	private String content;
 	private long lastModified;
@@ -39,14 +38,6 @@ public class Sting {
 
 	public void setUsername(String username) {
 		this.username = username;
-	}
-
-	public String getAuthor() {
-		return author;
-	}
-
-	public void setAuthor(String author) {
-		this.author = author;
 	}
 
 	public String getSubject() {

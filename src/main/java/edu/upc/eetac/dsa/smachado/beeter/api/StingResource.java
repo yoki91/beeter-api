@@ -54,7 +54,6 @@ public class StingResource
 				Sting sting = new Sting();
 				sting.setStingid(rs.getInt("stingid"));
 				sting.setUsername(rs.getString("username"));
-				sting.setAuthor(rs.getString("name"));
 				sting.setSubject(rs.getString("subject"));
 				oldestTimestamp = rs.getTimestamp("last_modified").getTime();
 				sting.setLastModified(oldestTimestamp);
@@ -89,17 +88,7 @@ public class StingResource
 	
 	
 	
-	private String seleccionQuery(int query) {
-		if (query == 0)
-			return "select s.* from stings s where s.subject LIKE ? and s.content LIKE ? order by last_modified desc limit ?";
-		else if (query == 1)
-			return "select s.* from stings s where s.subject LIKE ? order by last_modified desc limit ?";
-		else if (query == 2)
-			return "select s.* from stings s where s.content LIKE ? order by last_modified desc limit ?";
-		else
-			throw new BadRequestException();
-
-	}
+	
 
 	
 	
@@ -107,8 +96,8 @@ public class StingResource
 	
 	
 	
-	private String GET_STINGS_QUERY_username = "select s.*, u.name from stings s, users u where u.username=s.username=? and s.creation_timestamp < ifnull(?, now()) order by creation_timestamp desc limit ?";
-	private String GET_STINGS_QUERY_FROM_LAST_username = "select s.*, u.name from stings s, users u where u.username=s.username and s.creation_timestamp > ? order by creation_timestamp desc";
+	private String GET_STINGS_QUERY_username = "select s.*, u.name from stings s, users u where u.username=s.username and s.username=? and s.creation_timestamp < ifnull(?, now()) order by creation_timestamp desc limit ?";
+	private String GET_STINGS_QUERY_FROM_LAST_username = "select s.*, u.name from stings s, users u where u.username=s.username and s.username=? and s.creation_timestamp > ? order by creation_timestamp desc";
 
 	@GET
 	@Path("/user/{username}")
@@ -131,18 +120,19 @@ public class StingResource
 		try {
 			boolean updateFromLast = after > 0;
 			stmt = updateFromLast ? conn.prepareStatement(GET_STINGS_QUERY_FROM_LAST_username) : conn.prepareStatement(GET_STINGS_QUERY_username);
+			stmt.setString(1, username);
 			if (updateFromLast) 
 			{
-				stmt.setTimestamp(1, new Timestamp(after));
+				stmt.setTimestamp(2, new Timestamp(after));
 			} 
 			else 
 			{
 				if (before > 0)
-				stmt.setTimestamp(1, new Timestamp(before));
+				stmt.setTimestamp(2, new Timestamp(before));
 				else
-			    stmt.setTimestamp(1, null);
+			    stmt.setTimestamp(2, null);
 				length = (length <= 0) ? 5 : length;
-				stmt.setInt(2, length);
+				stmt.setInt(3, length);
 			}
 			ResultSet rs = stmt.executeQuery();
 			boolean first = true;
@@ -180,6 +170,22 @@ public class StingResource
 		return stings;
 	}
 
+	
+	private String seleccionQuery(int query) {
+		if (query == 0)
+			return "select s.* from stings s where s.subject LIKE ? and s.content LIKE ? order by last_modified desc limit ?";
+		else if (query == 1)
+			return "select s.* from stings s where s.subject LIKE ? order by last_modified desc limit ?";
+		else if (query == 2)
+			return "select s.* from stings s where s.content LIKE ? order by last_modified desc limit ?";
+		else
+			throw new BadRequestException();
+
+	}
+	
+	
+
+	
 	@GET
 	@Path("/search")
 	@Produces(MediaType.BEETER_API_STING_COLLECTION)
@@ -270,59 +276,13 @@ public class StingResource
 
 	private String GET_STING_BY_ID_QUERY = "select s.*, u.name from stings s, users u where u.username=s.username and s.stingid=?";
 
-	private Sting getStingFromDatabase(String stingid) 
-	{
-		Sting sting = new Sting();
-
-		Connection conn = null;
-		try {
-			conn = ds.getConnection();
-		} catch (SQLException e) {
-			throw new ServerErrorException("Could not connect to the database",
-					Response.Status.SERVICE_UNAVAILABLE);
-		}
-
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement(GET_STING_BY_ID_QUERY);
-			stmt.setInt(1, Integer.valueOf(stingid));
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) 
-			{
-				sting.setStingid(rs.getInt("stingid"));
-				sting.setUsername(rs.getString("username"));
-				sting.setAuthor(rs.getString("name"));
-				sting.setSubject(rs.getString("subject"));
-				sting.setContent(rs.getString("content"));
-				sting.setLastModified(rs.getTimestamp("last_modified")
-						.getTime());
-				sting.setCreationTimestamp(rs
-						.getTimestamp("creation_timestamp").getTime());
-			} else {
-				throw new NotFoundException("There's no sting with stingid="
-						+ stingid);
-			}
-		} catch (SQLException e) {
-			throw new ServerErrorException(e.getMessage(),
-					Response.Status.INTERNAL_SERVER_ERROR);
-		} finally {
-			try {
-				if (stmt != null)
-					stmt.close();
-				conn.close();
-			} catch (SQLException e) {
-
-			}
-		}
-
-		return sting;
-	}
+	
 
 	@GET
 	@Path("/{stingid}")
 	@Produces(MediaType.BEETER_API_STING)
-	public Response getSting(@PathParam("stingid") String stingid,
-			@Context Request request) {
+	public Response getSting(@PathParam("stingid") String stingid,@Context Request request) 
+	{
 		// Create CacheControl
 		CacheControl cc = new CacheControl();
 
@@ -365,21 +325,24 @@ public class StingResource
 
 		PreparedStatement stmt = null;
 		try {
-			stmt = conn.prepareStatement(INSERT_STING_QUERY,
-					Statement.RETURN_GENERATED_KEYS);
+			stmt = conn.prepareStatement(INSERT_STING_QUERY,Statement.RETURN_GENERATED_KEYS);
 
 			stmt.setString(1, security.getUserPrincipal().getName());
 			stmt.setString(2, sting.getSubject());
 			stmt.setString(3, sting.getContent());
 			stmt.executeUpdate();
 			ResultSet rs = stmt.getGeneratedKeys();
-			if (rs.next()) {
+			if (rs.next()) 
+			{
 				int stingid = rs.getInt(1);
 				sting = getStingFromDatabase(Integer.toString(stingid));
-			} else {
+			} 
+			else 
+			{
 				// Something has failed...
 			}
-		} catch (SQLException e) {
+		} catch (SQLException e) 
+		{
 			throw new ServerErrorException(e.getMessage(),
 					Response.Status.INTERNAL_SERVER_ERROR);
 		} finally {
@@ -412,14 +375,14 @@ public class StingResource
 
 	@DELETE
 	@Path("/{stingid}")
-	public void deleteSting(@PathParam("stingid") String stingid) {
+	public void deleteSting(@PathParam("stingid") String stingid) 
+	{
 		validateUser(stingid);
 		Connection conn = null;
 		try {
 			conn = ds.getConnection();
 		} catch (SQLException e) {
-			throw new ServerErrorException("Could not connect to the database",
-					Response.Status.SERVICE_UNAVAILABLE);
+			throw new ServerErrorException("Could not connect to the database",Response.Status.SERVICE_UNAVAILABLE);
 		}
 
 		PreparedStatement stmt = null;
@@ -445,17 +408,14 @@ public class StingResource
 		}
 	}
 
-	private String UPDATE_STING_QUERY = "update stings set subject=ifnull(?, subject), content=ifnull(?, content) where stingid=?";// sintasis
-																																	// update
-																																	// de
-																																	// MySQL
-
-	private void validateUser(String stingid) {
+	private String UPDATE_STING_QUERY = "update stings set subject=ifnull(?, subject), content=ifnull(?, content) where stingid=?";// sintasis update de MySQL
+	private void validateUser(String stingid) 
+	{
 		Sting sting = getStingFromDatabase(stingid);
 		String username = sting.getUsername();
-		if (!security.getUserPrincipal().getName().equals(username)) {
-			throw new ForbiddenException(
-					"You are not allowed to modify this sting.");
+		if (!security.getUserPrincipal().getName().equals(username)) 
+		{
+			throw new ForbiddenException("You are not allowed to modify this sting.");
 		}
 	}
 
@@ -512,6 +472,53 @@ public class StingResource
 		if (sting.getContent() != null && sting.getContent().length() > 500)
 			throw new BadRequestException(
 					"Content can't be greater than 500 characters.");
+	}
+	
+	
+	
+	private Sting getStingFromDatabase(String stingid) 
+	{
+		Sting sting = new Sting();
+
+		Connection conn = null;
+		try {
+			conn = ds.getConnection();
+		} catch (SQLException e) {
+			throw new ServerErrorException("Could not connect to the database",
+					Response.Status.SERVICE_UNAVAILABLE);
+		}
+
+		PreparedStatement stmt = null;
+		try {
+			stmt = conn.prepareStatement(GET_STING_BY_ID_QUERY);
+			stmt.setInt(1, Integer.valueOf(stingid));
+			ResultSet rs = stmt.executeQuery();
+			if (rs.next()) 
+			{
+				sting.setStingid(rs.getInt("stingid"));
+				sting.setUsername(rs.getString("username"));
+				sting.setSubject(rs.getString("subject"));
+				sting.setContent(rs.getString("content"));
+				sting.setLastModified(rs.getTimestamp("last_modified").getTime());
+				sting.setCreationTimestamp(rs.getTimestamp("creation_timestamp").getTime());
+			} else {
+				throw new NotFoundException("There's no sting with stingid="
+						+ stingid);
+			}
+		} catch (SQLException e) {
+			throw new ServerErrorException(e.getMessage(),
+					Response.Status.INTERNAL_SERVER_ERROR);
+		} finally {
+			try {
+				if (stmt != null)
+					stmt.close();
+				conn.close();
+			} catch (SQLException e) {
+
+			}
+		}
+
+		return sting;
 	}
 
 }

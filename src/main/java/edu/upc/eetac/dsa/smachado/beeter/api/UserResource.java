@@ -1,15 +1,13 @@
 package edu.upc.eetac.dsa.smachado.beeter.api;
 
 import java.sql.*;
-
 import javax.sql.DataSource;
 import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import javax.ws.rs.core.Response.Status;
-
 import org.apache.commons.codec.digest.DigestUtils;
-
 import edu.upc.eetac.dsa.smachado.beeter.api.model.User;
+
 
 @Path("/users")
 public class UserResource 
@@ -107,14 +105,7 @@ public class UserResource
 	
 	
 	
-	
-	
-	
-	
-	
-	
-
-    
+	  
 	@POST
 	@Consumes(MediaType.BEETER_API_USER)
 	@Produces(MediaType.BEETER_API_USER)
@@ -140,23 +131,19 @@ public class UserResource
 			stmtGetUsername.setString(1, user.getUsername());
 
 			ResultSet rs = stmtGetUsername.executeQuery();
-			if (rs.next())
-				throw new WebApplicationException(user.getUsername()+ " already exists.", Status.CONFLICT);
+			if (rs.next())throw new WebApplicationException(user.getUsername()+ " already exists.", Status.CONFLICT);
 			rs.close();
 
 			conn.setAutoCommit(false);
 			stmtInsertUserIntoUsers = conn.prepareStatement(INSERT_USER_INTO_USERS);
 			stmtInsertUserIntoUserRoles = conn.prepareStatement(INSERT_USER_INTO_USER_ROLES);
-
 			stmtInsertUserIntoUsers.setString(1, user.getUsername());
 			stmtInsertUserIntoUsers.setString(2, user.getPassword());
 			stmtInsertUserIntoUsers.setString(3, user.getName());
 			stmtInsertUserIntoUsers.setString(4, user.getEmail());
 			stmtInsertUserIntoUsers.executeUpdate();
-
 			stmtInsertUserIntoUserRoles.setString(1, user.getUsername());
 			stmtInsertUserIntoUserRoles.executeUpdate();
-
 			conn.commit();
 		} 
 		catch (SQLException e) 
@@ -212,18 +199,16 @@ public class UserResource
 	public User login(User user) 
 	{
 		if (user.getUsername() == null || user.getPassword() == null)
-			throw new BadRequestException(
-					"username and password cannot be null.");
+			throw new BadRequestException("username and password cannot be null.");
 
 		String pwdDigest = DigestUtils.md5Hex(user.getPassword());
-		String storedPwd = getUserFromDatabase(user.getUsername(), true)
-				.getPassword();
-
+		String storedPwd = getUserFromDatabase(user.getUsername(), true).getPassword();
 		user.setLoginSuccessful(pwdDigest.equals(storedPwd));
 		user.setPassword(null);
 		return user;
 	}
 
+	
 	private User getUserFromDatabase(String username, boolean password) 
 	{
 		User user = new User();
@@ -234,8 +219,7 @@ public class UserResource
 		} 
 		catch (SQLException e) 
 		{
-			throw new ServerErrorException("Could not connect to the database",
-					Response.Status.SERVICE_UNAVAILABLE);
+			throw new ServerErrorException("Could not connect to the database",Response.Status.SERVICE_UNAVAILABLE);
 		}
 
 		PreparedStatement stmt = null;
@@ -257,8 +241,7 @@ public class UserResource
 		} 
 		catch (SQLException e) 
 		{
-			throw new ServerErrorException(e.getMessage(),
-					Response.Status.INTERNAL_SERVER_ERROR);
+			throw new ServerErrorException(e.getMessage(),Response.Status.INTERNAL_SERVER_ERROR);
 		} 
 		finally 
 		{
